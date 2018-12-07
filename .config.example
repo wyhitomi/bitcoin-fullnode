@@ -1,0 +1,2 @@
+IMAGE_NAME="wyhitomi/bitcoin"
+TAG="0.17-stretch"
