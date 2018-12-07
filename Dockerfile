@@ -16,6 +16,14 @@ RUN set -x \
 	&& git clone https://gitlab.com/alfiedotwtf/bitcoin-on-debian.git \
   && make -C bitcoin-on-debian install \
 # clean-up
+  && rm -rf /usr/local/src/bitcoin-on-debian \
+  && apt-get purge -y --auto-remove \
+    gnupg1 \
+    apt-transport-https \
+    ca-certificates \
+    build-essential \
+    git \
+    wget \
   && apt-get autoremove -y \
   && rm -rf /var/lib/apt/lists/*
 
@@ -23,7 +31,7 @@ RUN set -x \
 RUN useradd -m -d /bitcoin -s /bin/bash -c "Bitcoin User" -U bitcoin
 
 # configure exposed ports
-EXPOSE 8333 18333 8332 18332
+EXPOSE 18333 18332
 
 # run bitcoin entrypoint
 COPY bitcoin-entrypoint.sh /bitcoin-entrypoint.sh
