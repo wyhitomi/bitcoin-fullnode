@@ -2,9 +2,7 @@ version: "3.6"
 
 services:
   bitcoin-testnet:
-    build:
-      context: .
-    # image: wyhitomi/bitcoin:0.17-stretch
+    image: wyhitomi/bitcoin:0.17-bionic
     ports:
       - 8332:8332
       - 18332:18332

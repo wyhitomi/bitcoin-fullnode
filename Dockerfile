@@ -1,45 +1,41 @@
-FROM debian:9
+FROM ubuntu:bionic
 
 ENV BTC_VERSION 0.17
-WORKDIR /usr/local/src
+ENV TZ 'America/Sao_Paulo'
 
 RUN set -x \
-	&& apt-get update \
-	&& apt-get install --no-install-recommends --no-install-suggests -y \
-    gnupg1 \
-    apt-transport-https \
-    ca-certificates \
-    build-essential \
-    git \
-    wget \
-# compile and install latest bitcoin binaries
-	&& git clone https://gitlab.com/alfiedotwtf/bitcoin-on-debian.git \
-  && make -C bitcoin-on-debian install \
-# clean-up
-  && rm -rf /usr/local/src/bitcoin-on-debian \
-  && apt-get purge -y --auto-remove \
-    gnupg1 \
-    apt-transport-https \
-    ca-certificates \
-    build-essential \
-    git \
-    wget \
+# Setting Brazillian Timezone
+  && echo $TZ > /etc/timezone \
+  && apt-get update \
+  && DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata \
+  && rm /etc/localtime \
+  && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
+  && dpkg-reconfigure -f noninteractive tzdata \
+# uninstall tzdata, locales
+  && apt-get purge -y tzdata locales \
+# Add bitcoin user
+  && useradd -m -d /bitcoin -s /bin/bash -c "Bitcoin User" -U bitcoin \
+# Intall bitcoin
+  && DEBIAN_FRONTEND=noninteractive apt-get install -y software-properties-common \
+  && apt-add-repository ppa:bitcoin/bitcoin \
+  && apt-get update \
+  && apt-get purge -y software-properties-common \
+  && apt-get install -y bitcoind \
+  && apt-get clean \
   && apt-get autoremove -y \
   && rm -rf /var/lib/apt/lists/*
-
-# add bitcoin user
-RUN useradd -m -d /bitcoin -s /bin/bash -c "Bitcoin User" -U bitcoin
 
 # configure exposed ports
 EXPOSE 18333 18332
 
 # run bitcoin entrypoint
-COPY bitcoin-entrypoint.sh /bitcoin-entrypoint.sh
-# ENTRYPOINT /bitcoin-entrypoint.sh
+COPY .docker/bitcoin-entrypoint.sh /usr/local/bin/bitcoin-entrypoint.sh
 
-# configure bitcoin home
+# Changing default dir to bitcoin home
 WORKDIR /bitcoin
 USER bitcoin
 
+ENTRYPOINT ["bitcoin-entrypoint.sh"]
+
 # start bitcoind
-CMD ["bitcoind","-testnet","-txindex","-reindex"]
+CMD ["bitcoind"]
